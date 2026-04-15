@@ -27,12 +27,12 @@ const i18n = {
     upToDate: "You're up to date",
     downloading: "Downloading update…",
     installing: "Preparing to install and restart…",
-    available: (version: string) => `v${version} available`,
-    ready: (version: string) => `v${version} ready`,
+    available: (_version: string) => "New version available",
+    ready: (_version: string) => "Update ready",
     error: "Update failed",
     checkingDetail: "This usually only takes a few seconds.",
     upToDateDetail: "This channel is already on the latest available version.",
-    download: "Download",
+    download: "Update",
     restart: "Restart",
     manual: "Open installer",
     later: "Later",
@@ -57,12 +57,12 @@ const i18n = {
     upToDate: "已是最新版本",
     downloading: "正在下载更新…",
     installing: "正在准备安装并重启…",
-    available: (version: string) => `v${version} 可更新`,
-    ready: (version: string) => `v${version} 已就绪`,
+    available: (_version: string) => "发现新版本",
+    ready: (_version: string) => "更新已就绪",
     error: "更新失败",
     checkingDetail: "通常只需要几秒。",
     upToDateDetail: "当前频道已是最新可用版本。",
-    download: "下载",
+    download: "更新",
     restart: "重启安装",
     manual: "打开安装包",
     later: "稍后",
@@ -102,7 +102,7 @@ export function UpdateBadge({
 
   return (
     <button className="update-badge" onClick={onUndismiss} type="button">
-      {t.badge}
+      {t.available ? t.available("") : t.badge}
     </button>
   );
 }
@@ -154,6 +154,19 @@ export function UpdateBanner({
     capability?.applyMode === "external-installer"
       ? t.manual
       : t.restart);
+
+  // Simplify version display by removing build timestamps and nightly info
+  const simplifyVersion = (v: string | null): string | null => {
+    if (!v) return null;
+    // Remove -nightly. and any timestamps after it
+    const cleanVersion = v.replace(/-nightly\.\d+/, "-nightly");
+    // For stable releases, just show major.minor.patch
+    const parts = cleanVersion.split(".");
+    if (parts.length >= 3 && !cleanVersion.includes("-")) {
+      return `${parts[0]}.${parts[1]}.${parts[2]}`;
+    }
+    return cleanVersion;
+  };
 
   return (
     <div className={`update-card${isError ? " update-card--error" : ""}`}>
@@ -221,10 +234,11 @@ export function UpdateBanner({
       {showsVersionDetails && version && (
         <div className="update-card-message">
           <div>
-            {t.currentVersion}: {currentVersion ? `v${currentVersion}` : "—"}
+            {t.currentVersion}:{" "}
+            {currentVersion ? `v${simplifyVersion(currentVersion)}` : "—"}
           </div>
           <div>
-            {t.latestVersion}: v{version}
+            {t.latestVersion}: v{simplifyVersion(version)}
           </div>
         </div>
       )}
